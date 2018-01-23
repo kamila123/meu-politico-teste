@@ -67,12 +67,14 @@ public class ProcessosRestController {
 	@RequestMapping(value = "/BuscaSP", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON)
 	private void buscaProcessosSaoPaulo(String nomePolitico) throws MalformedURLException, IOException {
 
+	
+		nomePolitico = "Alberto+Goldman";
 		final String linkTJ_SP = "https://esaj.tjsp.jus.br/cpopg/search.do?conversationId=&dadosConsulta.localPesquisa.cdLocal=-1&cbPesquisa=NMPARTE&dadosConsulta.tipoNuProcesso=UNIFICADO&dadosConsulta.valorConsulta="
-				+ "Alberto+Goldman" + "&uuidCaptcha=";
+				+ nomePolitico + "&uuidCaptcha=";
 
 		Document html = Jsoup.connect(linkTJ_SP).validateTLSCertificates(false).post();
 
-		ArrayList<String> linkProcessos = new ArrayList<>();
+		ArrayList<String> linkProcessos = new ArrayList<String>();
 
 		Elements elements = html.select("div#listagemDeProcessos");
 
@@ -82,8 +84,27 @@ public class ProcessosRestController {
 			linkProcessos.add("https://esaj.tjsp.jus.br" + elementsProcessos.get(i).getAllElements().attr("href"));
 		}
 
-		Document html_processo = Jsoup.connect(linkProcessos.get(0)).validateTLSCertificates(false).get();
+		Politico politico = new Politico();
+		politico.setNome(nomePolitico);
 
+		ArrayList<ProcessoJudicial> listaDeProcessos = new ArrayList<ProcessoJudicial>();
+
+		for (String processos : linkProcessos) {
+
+			Document html_processo = Jsoup.connect(processos).validateTLSCertificates(false).post();
+			Element detalhesProcesso = html_processo.getElementsByClass("secaoFormBody").get(1);
+			ProcessoJudicial processoJudicial = new ProcessoJudicial();
+			processoJudicial.setDescricao(detalhesProcesso.getElementsByClass("secaoFormBody").get(0)
+					.getElementsByTag("tr").get(6).getElementsByTag("td").get(1).text());
+			processoJudicial.setNumero(detalhesProcesso.getElementsByClass("secaoFormBody").get(0)
+					.getElementsByTag("tr").get(1).getElementsByTag("td").get(0).text());
+			processoJudicial.setPolitico(politico);
+			listaDeProcessos.add(processoJudicial);
+		}
+
+		politico.setProcessosJudiciais(listaDeProcessos);
+
+		return politico;
 	}
 
 	@ResponseBody
