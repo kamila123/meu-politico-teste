@@ -61,7 +61,7 @@ public class ProcessosRestController {
 			processoJudicial.setPolitico(politico);
 			listaDeProcessos.add(processoJudicial);
 
-		}
+		} 
 
 		politico.setProcessosJudiciais(listaDeProcessos);
 
